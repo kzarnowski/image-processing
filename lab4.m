@@ -1,0 +1,104 @@
+close all; clear; clc;
+
+% w przypadku transformaty fouriera,zawsze najpierw konwersja do double
+
+% ifft2 / ifft2
+% fftshift / ifftshift
+
+a=imread('cameraman.tif');
+a = double(a)/255;
+
+A=fftshift(fft2(a));
+WA = abs(A); % widmo amplitudowe - moduł liczby zespolonej
+
+% widma się logarytmuje, ale tylko na potrzeby stricte graficzne, żeby było
+% lepiej widać
+% imagesc(log(WA+0.01)); axis image
+
+% te linie a obrazie mówią że istnieją na obrazie krawędzie nachyone pod
+% takim kątem
+
+
+[Nz,Nx]=size(a);
+fx=linspace(-0.5,0.5,Nx);
+fz=linspace(-0.5,0.5,Nz);
+
+[FX, FZ]=meshgrid(fx,fz);
+
+% meshgrid pozwala na bardzo szybkie obliczanie częstotliwości wypadkowej
+f = sqrt(FX.^2+FZ.^2);
+
+% subplot(131), imagesc(FX);
+% subplot(132), imagesc(FZ);
+% subplot(133), imagesc(f);
+
+% fx, fz - służą do opisu osi
+% FX, FZ - służą do wyliczania częstotliwości wypadkowej
+
+
+% czestotliwosc wypadkowa utozsamiamy jako odleglosc od srodka
+imagesc(fx, fz, log(WA+0.01)); axis image
+
+% najprostszy filtr: (idealny dolnoprzepstowy)
+LP = f>0.05;
+imshow(LP); % koło, dla obrazów prostokątnych elipsa
+
+% filtracja polega na przemnozeniu filtra przez obraz uzyskany z
+% transformaty
+
+a_new = real(ifft2(ifftshift(A.*LP)));
+imshow(a_new); 
+% wzdluz krawedzi mamy oscylacje (tak jak na sygnalach) zwiazane z funkcja sink
+% poziom rozmycia zależy od LP 
+
+% filtr gornoprzepustowy HP = 1 - LP, wystarczy zmienic na f > 0.1
+
+% porownanie tych filtrow do prewitta i laplasjanow:
+% na prewittcie i sobelu byly tylko krawedzie, 0 albo 1; tutaj tez sa
+% widoczne krawedzie ale przepuszczamy tez inne rzeczy; dlatego nie powinno
+% sie stosowac filtracji czestotliwosciowej do wykrywania krawedzi
+
+%%
+% filtr butterwortha i filtr gaussa
+
+% filtr butterwortha
+% N (6) wpływa na poziom zbocza
+LP = 1./(1 + (f/0.05).^6);
+b_new = real(ifft2(ifftshift(A.*LP)));
+imshow(b_new)
+
+% filtr gaussa exp(-f^2/2*f0^2)
+
+LP = exp(-f.^2/(2*0.05^2));
+c_new = real(ifft2(ifftshift(A.*LP)));
+imshow(c_new)
+
+
+%%
+a = imread('F_dzieciol.png');
+imshow(a);
+
+a = double(a)/255;
+
+[Nz,Nx, S]=size(a);
+
+fx=linspace(-0.5,0.5,Nx);
+fz=linspace(-0.5,0.5,Nz);
+
+[FX, FZ]=meshgrid(fx,fz);
+
+for k=1:3
+    A=fftshift(fft2(a(:,:,k)));
+    WA = abs(A);
+    subplot(1,3,k), imagesc(fx, fz, log(WA+0.01)); axis image
+end
+
+
+
+
+
+
+
+
+
+
