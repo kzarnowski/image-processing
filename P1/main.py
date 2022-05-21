@@ -1,7 +1,9 @@
+from re import L
 import numpy as np
 import cv2 as cv
 from PIL import Image
 import matplotlib.pyplot as plt
+from sympy import Q
 
 
 def padding(originalImg, padSize):
@@ -45,23 +47,35 @@ def Dilation(padImg, size):
     return output
 
 
-def closing(padImg, kernel, size):
-    # First apply Dilation
-    dilation = Dilation(padImg, size)
-    padImg2 = padding(dilation, size//2)
-    # secondly apply Erosion on Dilated
-    output = Erosion(padImg2, kernel, size)
+def zad_3(img):
+    R = int(input('Podaj promien maski: '))
+
+    n = 2*R + 1
+    center = (R, R)
+    mask = np.zeros(shape=(n, n), dtype=np.uint8)
+    for x in range(n):
+        for y in range(n):
+            dist = ((center[0] - x)**2 + (center[1] - y)**2)**0.5
+            if dist <= R:
+                mask[x, y] = 1
+
+    # padding size
+    p_size = R//2
+    p_img = padding(img, p_size)
+
+    img = Dilation(p_img, p_size)
+    p_img = padding(img, p_size // 2)
+
+    output = Erosion(p_img, mask, p_size)
+
     return output
 
 
-def convex(img):
-    pad_img = padding(img, 1)
-    changed = True
-
+def zad_4(img):
     mask_1 = np.array([[1, 1, 0], [1, -1, 0], [1, 0, -1]])
     mask_2 = np.array([[1, 1, 1], [1, -1, 0], [0, -1, 0]])
-    # output = np.zeros((rows, columns), dtype=np.uint8)
-    output = np.full((rows, columns), False)
+    output = np.zeros((rows, columns), dtype=np.bool8)
+    #output = np.full((rows, columns), False)
 
     i = 0
     while not np.array_equal(img, output):
@@ -99,38 +113,69 @@ def hitmiss(img, mask):
     return output
 
 
+def zad_1(img):
+    output = np.empty(shape=img.shape)
+
+    n = int(input("Podaj liczbe punktow: "))
+    print("Podaj punkty, wspolrzedne oddzielone spacją np: 100 50")
+    p = []
+    for i in range(n):
+        point = input(f"Punkt {i+1}: ").split()
+        point[0] = int(point[0])
+        point[1] = int(point[1])
+        p.append(point)
+    p.append([0, 0])
+    p.append([255, 255])
+
+    p = sorted(p, key=lambda point: point[0])
+
+    for y in range(N):
+        for x in range(M):
+            i = 0
+            while(p[i+1][0] < img[y, x]):
+                i += 1
+            a = (p[i][1] - p[i+1][1])/(p[i][0] - p[i+1][0])
+            if mono:
+                output[y, x] = a*img[y, x] + (p[i][1] - a*p[i][0])
+            else:  # RGB
+                for c in range(2):
+                    output[y, x, c] = a*img[y, x, c] + (p[i][1] - a*p[i][0])
+
+    return output
+
+
 if __name__ == '__main__':
-    R = int(input('Podaj promien maski: '))
 
-    n = 2*R + 1
-    center = (R, R)
-    mask = np.zeros(shape=(n, n), dtype=np.uint8)
-    for x in range(n):
-        for y in range(n):
-            dist = ((center[0] - x)**2 + (center[1] - y)**2)**0.5
-            if dist <= R:
-                mask[x, y] = 1
+    img = cv.imread('P1/img/cameraman.tif', 0)
+    N, M = img.shape[:2]
+    mono = True if img.ndim == 2 else False
 
-    # padding size
-    p_size = R//2
-    # image reading
-    #orginalImg = np.array(Image.open('P1/img/circles.png'))
-    originalImg = cv.imread('P1/img/figure.png', 0)
-    print(type(originalImg))
-    # getting size of image
-    rows = originalImg.shape[0]
-    columns = originalImg.shape[1]
-    print(rows, columns)
-    # padding function call
-    # padImg = padding(originalImg, p_size)
+    zad = int(input("\
+    1. Normalizacja wg lamanej\n\
+    2. Filtracja odchylenia standardowego\n\
+    3. Zamkniecie elementem kolowym\n\
+    4. Wypukle otoczenie\n\n\
+    Podaj numer zadania (1-4): "))
 
-    # zad3
-    # output = closing(padImg, mask, 3)
-
-    # zad4
-    output = convex(originalImg)
+    output = None
+    if zad == 1:
+        output = zad_1(img)
+        pass
+    elif zad == 2:
+        # output = zad_2()
+        pass
+    elif zad == 3:
+        output = zad_3(img)
+    elif zad == 4:
+        output = zad_4(img)
+    else:
+        print("Zly numer zadania. Wybierz 1-4.\n")
+        exit()
 
     output_img = Image.fromarray(np.uint8(output))
+    plt.subplot(121)
+    plt.imshow(img, cmap="gray")
+    plt.subplot(122)
     plt.imshow(output, cmap="gray")
     plt.show()
 
