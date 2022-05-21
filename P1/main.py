@@ -74,8 +74,7 @@ def zad_3(img):
 def zad_4(img):
     mask_1 = np.array([[1, 1, 0], [1, -1, 0], [1, 0, -1]])
     mask_2 = np.array([[1, 1, 1], [1, -1, 0], [0, -1, 0]])
-    output = np.zeros((rows, columns), dtype=np.bool8)
-    #output = np.full((rows, columns), False)
+    output = np.zeros((N, M), dtype=np.bool8)
 
     i = 0
     while not np.array_equal(img, output):
