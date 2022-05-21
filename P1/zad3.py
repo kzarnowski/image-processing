@@ -54,40 +54,84 @@ def closing(padImg, kernel, size):
     return output
 
 
+def convex(img):
+    pad_img = padding(img, 1)
+    changed = True
+
+    mask_1 = np.array([[1, 1, 0], [1, -1, 0], [1, 0, -1]])
+    mask_2 = np.array([[1, 1, 1], [1, -1, 0], [0, -1, 0]])
+    # output = np.zeros((rows, columns), dtype=np.uint8)
+    output = np.full((rows, columns), False)
+
+    i = 0
+    while not np.array_equal(img, output):
+        i += 1
+        output = img
+
+        for _ in range(4):
+            img = np.logical_or(img, hitmiss(img, mask_1))
+            img = np.logical_or(img, hitmiss(img, mask_2))
+            mask_1 = np.rot90(mask_1)
+            mask_2 = np.rot90(mask_2)
+
+    print(i)
+    return output
+
+
+def hitmiss(img, mask):
+    [N, M] = img.shape
+    res = np.zeros((3, 3), dtype=np.bool8)
+
+    output = np.zeros((N, M), dtype=np.uint8)
+    for y in range(1, N-1):
+        for x in range(1, M-1):
+            fig = img[y-1:y+2, x-1:x+2]
+            for i in range(3):
+                for j in range(3):
+                    if mask[i, j] == 1:
+                        res[i, j] = fig[i, j] == 1
+                    elif mask[i, j] == -1:
+                        res[i, j] = fig[i, j] == 0
+                    else:
+                        res[i, j] = 1
+            output[y, x] = np.all(res)
+            res.fill(False)
+    return output
+
+
 if __name__ == '__main__':
-    size = 3
-    # Structuring Element
-    kernel = np.ones((size, size), np.uint8)
+    R = int(input('Podaj promien maski: '))
+
+    n = 2*R + 1
+    center = (R, R)
+    mask = np.zeros(shape=(n, n), dtype=np.uint8)
+    for x in range(n):
+        for y in range(n):
+            dist = ((center[0] - x)**2 + (center[1] - y)**2)**0.5
+            if dist <= R:
+                mask[x, y] = 1
+
     # padding size
-    p_size = size//2
+    p_size = R//2
     # image reading
     #orginalImg = np.array(Image.open('P1/img/circles.png'))
-    originalImg = cv.imread('P1/img/test.png', 0)
+    originalImg = cv.imread('P1/img/figure.png', 0)
     print(type(originalImg))
     # getting size of image
     rows = originalImg.shape[0]
     columns = originalImg.shape[1]
     print(rows, columns)
     # padding function call
-    padImg = padding(originalImg, p_size)
+    # padImg = padding(originalImg, p_size)
 
-    # Then applu closing to remove gaps
-    output = closing(padImg, kernel, 3)
+    # zad3
+    # output = closing(padImg, mask, 3)
+
+    # zad4
+    output = convex(originalImg)
+
     output_img = Image.fromarray(np.uint8(output))
     plt.imshow(output, cmap="gray")
     plt.show()
 
-    # test_img = np.zeros(shape=(200, 200))
-    # test_img[50:150, 50:150] = 1
-    # from itertools import combinations
-    # from random import sample
-
-    # n = 100
-    # x = sample(range(50, 150), 100)
-    # y = sample(range(50, 150), 100)
-    # for i in range(100):
-    #     test_img[x[i], y[i]] = 0
-
-    # print(np.sum(test_img))
-    # output = Image.fromarray(np.bool8(test_img))
-    # output.save("P1/img/test.png")
+    output_img.save("P1/img/result.png")
