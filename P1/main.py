@@ -7,9 +7,9 @@ from sympy import Q
 
 
 def padding(originalImg, padSize):
-    padImg = np.zeros((rows+2*padSize, columns+2*padSize), dtype=np.uint8)
+    padImg = np.zeros((N+2*padSize, M+2*padSize), dtype=np.uint8)
     # Slicing
-    padImg[padSize:rows+padSize, padSize:columns+padSize] = originalImg
+    padImg[padSize:N+padSize, padSize:M+padSize] = originalImg
     return padImg
 
 
@@ -143,6 +143,35 @@ def zad_1(img):
     return output
 
 
+def zad_2(img):
+    n = int(input("Podaj rozmiar maski: "))
+    pad = n // 2
+    output = np.empty(shape=(N, M))
+
+    pad_img = padding(img, pad)
+
+    for y in range(pad, pad+N):
+        for x in range(pad, pad+M):
+            if mono:
+                fig = pad_img[y-pad:y+pad+1, x-pad:x+pad+1]
+            else:
+                fig = pad_img[y-pad:y+pad+1, x-pad:x+pad+1, :]
+            output[y-pad, x-pad] = np.std(fig)
+
+    # normalizacja
+    u = np.min(output)
+    v = np.max(output)
+    a = (0 - 255)/(u - v)
+
+    for y in range(N):
+        for x in range(M):
+            output[y, x] = int(a*output[y, x] - a*u)
+
+    print(u, v, np.min(output), np.max(output))
+
+    return output
+
+
 if __name__ == '__main__':
 
     img = cv.imread('P1/img/cameraman.tif', 0)
@@ -161,7 +190,7 @@ if __name__ == '__main__':
         output = zad_1(img)
         pass
     elif zad == 2:
-        # output = zad_2()
+        output = zad_2(img)
         pass
     elif zad == 3:
         output = zad_3(img)
